@@ -116,10 +116,16 @@
 	<string>/Users/me/appium</string>
 	<key>External NodeJS Binary Path</key>
 	<string>/usr/local/bin/node</string>
+	<key>Environment Variables</key>
+	<array/>
 	<key>Force Scroll Log</key>
 	<false/>
+	<key>Maximum Log Length</key>
+	<integer>200000</integer>
 	<key>Inspector CodeMaker Language</key>
 	<string>Java</string>
+	<key>Inspector Search For Locators From Current Element</key>
+	<false/>
 	<key>Inspector Shows Disabled Elements</key>
 	<true/>
 	<key>Inspector Shows Invisible Elements</key>
@@ -247,8 +253,6 @@
 	<key>Use New Command Timeout</key>
 	<true/>
 	<key>Use NodeJS Debugging</key>
-	<false/>
-	<key>Use Quiet Logging</key>
 	<false/>
 	<key>Use Remote Server</key>
 	<false/>

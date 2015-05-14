@@ -10,6 +10,8 @@
 
 #import "AppiumAppDelegate.h"
 #import "AppiumModel.h"
+#import "AppiumPreferencesFile.h"
+#import <QuartzCore/QuartzCore.h>
 
 @implementation AppiumInspectorWindowController
 
@@ -20,7 +22,7 @@
     if (self)
 	{
         AppiumModel *model = [(AppiumAppDelegate*)[[NSApplication sharedApplication] delegate] model];
-        
+		
         self.driver = [[SERemoteWebDriver alloc] initWithServerAddress:model.general.serverAddress port:[model.general.serverPort integerValue]];
 		
 		if (self.driver == nil)
@@ -107,6 +109,10 @@
 	{
 		[self.selectedElementHighlightView setHidden:YES];
 	}
+	
+	// Hide selected points, as when the window resizes, they will likely be out of place
+	self.screenshotImageView.beginPoint = nil;
+	self.screenshotImageView.endPoint   = nil;
 }
 
 -(void) awakeFromNib
@@ -116,13 +122,19 @@
     self.bottomDrawer = [[NSDrawer alloc] initWithContentSize:contentSize preferredEdge:NSMinYEdge];
     [self.bottomDrawer setParentWindow:self.window];
     [self.bottomDrawer setMinContentSize:contentSize];
-	[self.bottomDrawer setContentView:self.bottomDrawerContentView];
+	[self.bottomDrawer setContentView:self.inspector.recorderViewController.view];
 	[self.bottomDrawer.contentView setAutoresizingMask:NSViewHeightSizable];
 }
 
 - (void)dealloc
 {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+-(NSNumber*) searchLocatorsFromCurrentElement { return [NSNumber numberWithBool:[[NSUserDefaults standardUserDefaults] boolForKey:APPIUM_PLIST_INSPECTOR_SEARCH_FOR_LOCATORS_FROM_CURRENT_ELEMENT]]; }
+
+-(void) setSearchLocatorsFromCurrentElement:(NSNumber *)searchLocatorsFromCurrentElement {
+	[[NSUserDefaults standardUserDefaults] setValue:searchLocatorsFromCurrentElement forKey:APPIUM_PLIST_INSPECTOR_SEARCH_FOR_LOCATORS_FROM_CURRENT_ELEMENT];
 }
 
 -(IBAction)locatorSearchButtonClicked:(id)sender {
@@ -153,7 +165,13 @@
 
 		// find elements and grab identifying information
 		if (locator != nil) {
-			[elements addObjectsFromArray:[self.driver findElementsBy:locator]];
+			if ([self.searchLocatorsFromCurrentElement boolValue]) {
+				SEWebElement *root = [self.driver findElementBy:self.inspector.locatorForSelectedNode.by];
+				[elements addObjectsFromArray:[root findElementsBy:locator]];
+			} else {
+				[elements addObjectsFromArray:[self.driver findElementsBy:locator]];
+			}
+			
 			if ([elements count] == 1) {
 				element = (SEWebElement*)[elements objectAtIndex:0];
 				if (element.opaqueId != nil) {
@@ -202,6 +220,69 @@
 	});
 	
 	return nil;
+}
+
+- (IBAction)togglePreciseTapPopover:(id)sender
+{
+	if (!self.preciseTapPopoverViewController.popover.isShown) {
+		[self.selectedElementHighlightView setHidden:YES];
+		[self.preciseTapPopoverViewController.popover showRelativeToRect:[self.preciseTapButton bounds]
+																			   ofView:self.preciseTapButton
+																		preferredEdge:NSMaxYEdge];
+	} else {
+		[self.preciseTapPopoverViewController.popover close];
+		[self.selectedElementHighlightView setHidden:NO];
+	}
+}
+
+- (IBAction)toggleSwipePopover:(id)sender
+{
+	if (!self.swipePopoverViewController.popover.isShown) {
+		[self.selectedElementHighlightView setHidden:YES];
+		[self.swipePopoverViewController.popover showRelativeToRect:[self.swipeButton bounds]
+																		  ofView:self.swipeButton
+																   preferredEdge:NSMaxYEdge];
+	} else {
+		[self.swipePopoverViewController.popover close];
+		[self.selectedElementHighlightView setHidden:NO];
+	}
+}
+
+-(IBAction)toggleRecording:(id)sender
+{
+	[self.inspector.recorderViewController.codeMaker setIsRecording:[NSNumber numberWithBool:![self.inspector.recorderViewController.codeMaker.isRecording boolValue]]];
+	if ([self.inspector.recorderViewController.codeMaker.isRecording boolValue])
+	{
+		self.bottomDrawer.contentSize = CGSizeMake(self.window.frame.size.width, self.bottomDrawer.contentSize.height);
+		[self.bottomDrawer openOnEdge:NSMinYEdge];
+		
+		CIFilter *filter = [CIFilter filterWithName:@"CIFalseColor"];
+		[filter setDefaults];
+		[filter setValue:[CIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:1.0] forKey:@"inputColor0"];
+		[filter setValue:[CIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:1.0] forKey:@"inputColor1"];
+		[filter setName:@"pulseFilter"];
+		[self.recordButton.layer setFilters:[NSArray arrayWithObject:filter]];
+		
+		CABasicAnimation* pulseAnimation1 = [CABasicAnimation animation];
+		pulseAnimation1.keyPath = @"filters.pulseFilter.inputColor1";
+		pulseAnimation1.fromValue = [CIColor colorWithRed:0.8 green:0.0 blue:0.0 alpha:0.9];
+		pulseAnimation1.toValue = [CIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:1.0];
+		pulseAnimation1.duration = 1.5;
+		pulseAnimation1.repeatCount = HUGE_VALF;
+		pulseAnimation1.autoreverses = YES;
+		
+		[self.recordButton.layer addAnimation:pulseAnimation1 forKey:@"pulseAnimation1"];
+		NSShadow * shadow = [NSShadow new];
+		[shadow setShadowColor:[[NSColor blackColor] colorWithAlphaComponent:0.95f]];
+		[self.recordButton setShadow:shadow];
+	}
+	else
+	{
+		[self.recordButton setShadow:nil];
+		[self.recordButton.layer setFilters:[NSArray new]];
+		[self.recordButton.layer removeAllAnimations];
+		[self.bottomDrawer close];
+	}
 }
 
 @end

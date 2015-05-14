@@ -8,31 +8,32 @@
 
 #import <Cocoa/Cocoa.h>
 #import <Selenium/SERemoteWebDriver.h>
-#import "AppiumCodeMakerPreciseTapPopoverViewController.h"
-#import "AppiumCodeMakerSwipePopOverViewController.h"
+#import "AppiumInspectorPreciseTapPopoverViewController.h"
+#import "AppiumInspectorSwipePopOverViewController.h"
 #import "AppiumInspector.h"
 #import "AppiumInspectorScreenshotImageView.h"
 #import "WebDriverElementNode.h"
 
 @class AppiumInspector;
+@class AppiumInspectorLocationPopOverViewController;
 @class AppiumInspectorScreenshotImageView;
-@class AppiumCodeMakerPreciseTapPopoverViewController;
-@class AppiumCodeMakerSwipePopOverViewController;
+@class AppiumInspectorPreciseTapPopoverViewController;
+@class AppiumInspectorSwipePopOverViewController;
 @class SERemoteWebDriver;
 
 @interface AppiumInspectorWindowController : NSWindowController
     @property SERemoteWebDriver *driver;
     @property NSDrawer *bottomDrawer;
-	@property IBOutlet NSView *bottomDrawerContentView;
 	@property IBOutlet NSBrowser *browser;
 	@property IBOutlet NSTextView *detailsTextView;
 	@property IBOutlet NSView *selectedElementHighlightView;
 	@property IBOutlet AppiumInspector *inspector;
 	@property IBOutlet AppiumInspectorScreenshotImageView *screenshotImageView;
 	@property IBOutlet NSButton *recordButton;
-    @property IBOutlet AppiumCodeMakerPreciseTapPopoverViewController *preciseTapPopoverViewController;
+    @property IBOutlet AppiumInspectorPreciseTapPopoverViewController *preciseTapPopoverViewController;
     @property IBOutlet NSButton *preciseTapButton;
-    @property IBOutlet AppiumCodeMakerSwipePopOverViewController *swipePopoverViewController;
+	@property NSNumber *searchLocatorsFromCurrentElement;
+    @property IBOutlet AppiumInspectorSwipePopOverViewController *swipePopoverViewController;
     @property IBOutlet NSButton *swipeButton;
 	@property IBOutlet NSButton *findElementButton;
 	@property NSString *syntaxDefinition;

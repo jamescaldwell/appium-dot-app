@@ -14,9 +14,7 @@
 #import "AppiumPreferencesFile.h"
 #import "XMLReader.h"
 
-@interface AppiumInspector ()
-@property (readonly) SERemoteWebDriver *driver;
-@end
+NSString *const AppiumInspectoriOSUIAWindow = @"UIAWindow";
 
 @implementation AppiumInspector
 
@@ -33,11 +31,9 @@
     return self;
 }
 
-#pragma mark - Private Properties
--(SERemoteWebDriver*) driver { return _windowController.driver; }
-
 #pragma mark - Public Properties
 -(AppiumModel*) model { return ((AppiumAppDelegate*)[[NSApplication sharedApplication] delegate]).model; }
+-(SERemoteWebDriver*) driver { return _windowController.driver; }
 
 -(NSNumber*) showDisabled { return [NSNumber numberWithBool:[[NSUserDefaults standardUserDefaults] boolForKey:APPIUM_PLIST_INSPECTOR_SHOWS_DISABLED_ELEMENTS]]; }
 
@@ -157,7 +153,7 @@
 			return result;
 	}
 
-	if (NSPointInRect(point, node.rect))
+	if (NSPointInRect(point, node.rect) && !(self.model.isIOS && [node.type isEqualToString:AppiumInspectoriOSUIAWindow]))
 		return node;
 
 	return nil;
