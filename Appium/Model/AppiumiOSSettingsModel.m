@@ -30,16 +30,7 @@
 
 -(NSArray*) allDevices
 {
-	//return [self getDevices];
-	return @[@"iPhone 6"
-			, @"iPhone 6 Plus"
-			, @"iPhone 5s"
-			, @"iPhone 5"
-			, @"iPhone 4s"
-			, @"iPad 2"
-			, @"iPad Retina"
-			, @"iPad Air"
-			];
+	return [self getDevices];
 }
 
 -(NSArray*) allLanguages
@@ -60,7 +51,7 @@
 
 -(NSArray*) allPlatformVersions
 {
-	return @[@"8.3", @"8.2", @"8.1.2", @"8.1.1", @"8.1", @"8.0.2", @"8.0", @"7.1.1", @"7.1", @"7.0.6", @"7.0.5", @"7.0.4", @"7.0.3", @"7.0.2", @"7.0.1", @"7.0", @"6.1", @"6.0"];
+	return @[@"9.3", @"9.2", @"9.1", @"9.0", @"8.4", @"8.3", @"8.2", @"8.1.2", @"8.1.1", @"8.1", @"8.0.2", @"8.0", @"7.1.1", @"7.1", @"7.0.6", @"7.0.5", @"7.0.4", @"7.0.3", @"7.0.2", @"7.0.1", @"7.0", @"6.1", @"6.0"];
 }
 
 -(NSString*) appPath
@@ -124,6 +115,15 @@
 	[DEFAULTS setValue:deviceName forKey:APPIUM_PLIST_IOS_DEVICE_NAME];
 }
 
+-(NSString*) instrumentsBinaryPath
+{
+	return [DEFAULTS stringForKey:APPIUM_PLIST_IOS_INSTRUMENTS_BINARY_PATH];
+}
+-(void) setInstrumentsBinaryPath:(NSString *)instrumentsBinaryPath
+{
+	[DEFAULTS setValue:instrumentsBinaryPath forKey:APPIUM_PLIST_IOS_INSTRUMENTS_BINARY_PATH];
+}
+
 -(BOOL) isolateSimDevice
 {
 	return [DEFAULTS boolForKey:APPIUM_PLIST_IOS_ISOLATE_SIM_DEVICE];
@@ -131,15 +131,6 @@
 -(void) setIsolateSimDevice:(BOOL)isolateSimDevice
 {
 	[DEFAULTS setBool:isolateSimDevice forKey:APPIUM_PLIST_IOS_ISOLATE_SIM_DEVICE];
-}
-
--(BOOL) keepArtifacts
-{
-	return [DEFAULTS boolForKey:APPIUM_PLIST_IOS_KEEP_ARTIFACTS];
-}
--(void) setKeepArtifacts:(BOOL)keepArtifacts
-{
-	[DEFAULTS setBool:keepArtifacts forKey:APPIUM_PLIST_IOS_KEEP_ARTIFACTS];
 }
 
 -(BOOL) keepKeychains
@@ -176,6 +167,14 @@
 }
 -(void) setLocale:(NSString *)locale {
 	[DEFAULTS setValue:locale forKey:APPIUM_PLIST_IOS_LOCALE];
+}
+
+-(NSString*) localizableStringsDirectory
+{
+	return [DEFAULTS stringForKey:APPIUM_PLIST_IOS_LOCALIZABLE_STRING_DIRECTORY];
+}
+-(void) setLocalizableStringsDirectory:(NSString *)localizableStringsDirectory {
+	[DEFAULTS setValue:localizableStringsDirectory forKey:APPIUM_PLIST_IOS_LOCALIZABLE_STRING_DIRECTORY];
 }
 
 -(BOOL) noReset
@@ -228,6 +227,15 @@
 -(void) setShowSimulatorLog:(BOOL)showSimulatorLog
 {
 	[DEFAULTS setBool:showSimulatorLog forKey:APPIUM_PLIST_IOS_SHOW_SIMULATOR_LOG];
+}
+
+-(BOOL) showSystemLog
+{
+	return [DEFAULTS boolForKey:APPIUM_PLIST_IOS_SHOW_SYSTEM_LOG];
+}
+-(void) setShowSystemLog:(BOOL)showSystemLog
+{
+	[DEFAULTS setBool:showSystemLog forKey:APPIUM_PLIST_IOS_SHOW_SYSTEM_LOG];
 }
 
 - (NSString *)traceDirectory
@@ -311,6 +319,15 @@
 	[self setUseDefaultDevice:!useDeviceName];
 }
 
+-(BOOL) useInstrumentsBinaryPath
+{
+	return [DEFAULTS boolForKey:APPIUM_PLIST_IOS_USE_INSTRUMENTS_BINARY_PATH];
+}
+-(void) setUseInstrumentsBinaryPath:(BOOL)useInstrumentsBinaryPath
+{
+	[DEFAULTS setBool:useInstrumentsBinaryPath forKey:APPIUM_PLIST_IOS_USE_INSTRUMENTS_BINARY_PATH];
+}
+
 -(BOOL) useLanguage
 {
 	return [DEFAULTS boolForKey:APPIUM_PLIST_IOS_USE_LANGUAGE];
@@ -336,6 +353,15 @@
 -(void) setUseLocale:(BOOL)useLocale
 {
 	[DEFAULTS setBool:useLocale forKey:APPIUM_PLIST_IOS_USE_LOCALE];
+}
+
+-(BOOL) useLocalizableStringsDirectory
+{
+	return [DEFAULTS boolForKey:APPIUM_PLIST_IOS_USE_LOCALIZABLE_STRINGS_DIRECTORY];
+}
+-(void) setUseLocalizableStringsDirectory:(BOOL)useLocalizableStringsDirectory
+{
+	[DEFAULTS setBool:useLocalizableStringsDirectory forKey:APPIUM_PLIST_IOS_USE_LOCALIZABLE_STRINGS_DIRECTORY];
 }
 
 -(BOOL) useMobileSafari
@@ -422,11 +448,17 @@
 		{
 			if ([line hasPrefix:@"    "])
 			{
-				NSArray *deviceNamePieces = [[line stringByReplacingOccurrencesOfString:@"    " withString:@""] componentsSeparatedByString:@")"];
-				NSString *deviceName = [NSString stringWithFormat:@"%@)", [deviceNamePieces objectAtIndex:0]];
-				[devices addObject:deviceName];
+				NSArray *deviceNamePieces = [[line stringByReplacingOccurrencesOfString:@"    " withString:@""] componentsSeparatedByString:@" ("];
+				NSString *deviceName = [deviceNamePieces objectAtIndex:0];
+				
+				if (([deviceName containsString:@"iPhone"] || [deviceName containsString:@"iPad"]) && [devices indexOfObject:deviceName] == NSNotFound) {
+					[devices addObject:deviceName];
+				}
 			}
 		}
+		
+		[devices sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+	
 		return devices;
 	//}
 	//@catch (NSException *exception) {
